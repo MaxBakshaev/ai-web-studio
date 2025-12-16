@@ -1,0 +1,10 @@
+"""Docs: https://fastapi.tiangolo.com/#create-it"""
+
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/health", tags=["health"])
+
+
+@router.get("", summary="Health check")
+async def health_check():
+    return {"status": "ok"}
