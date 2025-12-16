@@ -13,10 +13,7 @@ class Settings:
     APP_NAME: str = "AI Web Studio"
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me")
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/ai_web_studio",
-    )
+    DATABASE_URL: str = os.getenv("DATABASE_URL")
 
 
 settings = Settings()
