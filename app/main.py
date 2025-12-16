@@ -1,5 +1,9 @@
 """Docs: https://fastapi.tiangolo.com/#create-it"""
 
+from .api.v1.health import router as health_router
+from .api.v1.auth import router as auth_router
+from .api.v1.users import router as users_router
+
 from fastapi import FastAPI
 
 from .core.config import settings
@@ -19,5 +23,9 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+app.include_router(health_router)
+app.include_router(auth_router)
+app.include_router(users_router)
 
 # uvicorn app.main:app --reload
