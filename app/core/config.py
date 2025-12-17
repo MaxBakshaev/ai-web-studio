@@ -14,6 +14,7 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me")
     DATABASE_URL: str = os.getenv("DATABASE_URL")
+    DATABASE_URL_SYNC: str = os.getenv("DATABASE_URL_SYNC", "")
 
 
 settings = Settings()
