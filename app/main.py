@@ -3,6 +3,7 @@
 from .api.v1.health import router as health_router
 from .api.v1.auth import router as auth_router
 from .api.v1.users import router as users_router
+from .api.v1.generation import router as generation_router
 
 from fastapi import FastAPI
 
@@ -27,5 +28,6 @@ app = create_app()
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(generation_router)
 
 # uvicorn app.main:app --reload
