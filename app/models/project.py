@@ -1,54 +1,53 @@
-from datetime import datetime
-from sqlalchemy import String, DateTime, ForeignKey, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Column, String, Text, JSON, DateTime, Enum, Boolean
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.sql import func
+import uuid
+from . import Base
+import enum
 
-from .base import Base
+
+class ProjectStatus(str, enum.Enum):
+    PENDING = "pending"
+    GENERATING = "generating"
+    REVIEWING = "reviewing"
+    READY = "ready"
+    DEPLOYING = "deploying"
+    DEPLOYED = "deployed"
+    FAILED = "failed"
 
 
 class Project(Base):
     __tablename__ = "projects"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        index=True,
-        nullable=False,
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), nullable=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
 
-    title: Mapped[str] = mapped_column(
-        String(200),
-        nullable=False,
-    )
-    prompt: Mapped[str] = mapped_column(
-        String(5000),
-        nullable=False,
-    )
+    # AI Generation Fields
+    prompt = Column(Text, nullable=False)  # Оригинальный промпт пользователя
+    generated_structure = Column(JSON, nullable=True)  # JSON структуры сайта
+    generated_html = Column(Text, nullable=True)
+    generated_css = Column(Text, nullable=True)
+    generated_js = Column(Text, nullable=True)
+    generated_backend = Column(Text, nullable=True)  # Python код бэкенда
+    color_scheme = Column(String(100), nullable=True)
+    ai_model_used = Column(String(100), nullable=True)  # deepseek, gpt-4 и т.д.
 
-    tech_stack: Mapped[str] = mapped_column(
-        String(50),
-        default="static",
-        nullable=False,
-    )
-    status: Mapped[str] = mapped_column(
-        String(30),
-        default="draft",
-        nullable=False,
-    )
+    # Deployment & Storage
+    zip_file_url = Column(String(500), nullable=True)  # URL до ZIP архива
+    preview_url = Column(String(500), nullable=True)  # URL превью
+    deployed_url = Column(String(500), nullable=True)  # Продакшен URL
+    github_repo_url = Column(String(500), nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False,
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
-    )
+    # Metadata
+    status = Column(Enum(ProjectStatus), default=ProjectStatus.PENDING)
+    is_public = Column(Boolean, default=False)
+    tokens_used = Column(JSON, nullable=True)  # {frontend: 1000, design: 500}
 
-    jobs = relationship(
-        "GenerationJob",
-        back_populates="project",
-        cascade="all, delete-orphan",
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Связь с заданиями (jobs)
+    # jobs = relationship("Job", back_populates="project")

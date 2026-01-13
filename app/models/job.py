@@ -1,46 +1,52 @@
-from datetime import datetime
-from sqlalchemy import String, DateTime, ForeignKey, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Column, Float, Integer, String, Text, JSON, DateTime, Enum, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+import uuid
+from . import Base
+import enum
 
-from .base import Base
+
+class JobType(str, enum.Enum):
+    FRONTEND_GENERATION = "frontend_generation"
+    DESIGN_GENERATION = "design_generation"
+    BACKEND_GENERATION = "backend_generation"
+    IMAGE_GENERATION = "image_generation"
+    CODE_REVIEW = "code_review"
+    BUILD_ZIP = "build_zip"
+    DEPLOY = "deploy"
+    GITHUB_CREATE = "github_create"
 
 
-class GenerationJob(Base):
-    __tablename__ = "generation_jobs"
+class JobStatus(str, enum.Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id", ondelete="CASCADE"),
-        index=True,
-        nullable=False,
-    )
 
-    status: Mapped[str] = mapped_column(
-        String(20),
-        default="pending",
-        nullable=False,
-    )  # pending/running/success/failed
-    error_message: Mapped[str | None] = mapped_column(
-        String(1000),
-        nullable=True,
-    )
+class Job(Base):
+    __tablename__ = "jobs"
 
-    n8n_execution_id: Mapped[str | None] = mapped_column(
-        String(100),
-        nullable=True,
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False)
+    job_type = Column(Enum(JobType), nullable=False)
+    status = Column(Enum(JobStatus), default=JobStatus.PENDING)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False,
-    )
-    finished_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
+    # Input/Output
+    input_data = Column(JSON, nullable=True)  # Входные данные для AI
+    output_data = Column(JSON, nullable=True)  # Результаты генерации
+    error_message = Column(Text, nullable=True)
 
-    project = relationship(
-        "Project",
-        back_populates="jobs",
-    )
+    # AI Metadata
+    ai_model = Column(String(100), nullable=True)
+    tokens_used = Column(Integer, nullable=True)
+    generation_time = Column(Float, nullable=True)  # В секундах
+
+    # Relationships
+    # project = relationship("Project", back_populates="jobs")
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
